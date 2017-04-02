@@ -1,0 +1,18 @@
+extends layout
+
+block content
+  h1= title
+  h3 What is this??
+  p an experiment, inspired by 
+    a(href='https://www.opendatasoft.com/2017/03/31/how-we-make-data-sing/') an OpenDataSoft experiment
+    |  and Paul from 
+    a(href='http://newportdataproject.org/') newportdataproject.org
+  h3 What do I do??
+  p click the buttons, turn on your speakers. try not to cringe.
+  div(id='waveblock')
+  button(type='button' onclick='play()') Play
+  button(type='button' onclick='pause()') Pause
+  button(type='button' onclick='stop()') Stop
+  h3 Wait, what was I listening to??
+  p Just some tidal data...
+  div(id='waveplot')
