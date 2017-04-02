@@ -22,56 +22,85 @@ var coopsLoader = function (callback) {
     return $.getJSON("/coops", parameters, callback);
 }
 
+/**
+ * no longer using wavesurfer.js, so make our own HTML5 visualizer..
+ * https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API/Visualizations_with_Web_Audio_API
+ */
+var createAudioVisualizer = function (environment) {
+    var context = environment.audioSystem.context;
+    var analyser = context.createAnalyser();
+
+    // this was a lot of fun to find. looks like this jams in the analyzer as a sink
+    environment.audioSystem.nativeNodeManager.insertOutput(analyser);
+
+    analyser.fftSize = 2048;
+    var bufferLength = analyser.fftSize;
+    var dataArray = new Uint8Array(bufferLength);
+    analyser.getByteTimeDomainData(dataArray);
+
+    // draw an oscilloscope of the current audio source
+    var canvas = $("canvas").get(0); // needed to get the actual element from jquery selector?
+    var canvasCtx = canvas.getContext("2d");
+    var WIDTH = canvas.width;
+    var HEIGHT = canvas.height;
+    function draw() {
+
+        drawVisual = requestAnimationFrame(draw);
+
+        analyser.getByteTimeDomainData(dataArray);
+
+        canvasCtx.fillStyle = 'rgb(250, 250, 250)';
+        canvasCtx.fillRect(0, 0, WIDTH, HEIGHT);
+
+        canvasCtx.lineWidth = 2;
+        canvasCtx.strokeStyle = 'rgb(0, 0, 0)';
+
+        canvasCtx.beginPath();
+
+        var sliceWidth = WIDTH * 1.0 / bufferLength;
+        var x = 0;
+
+        for (var i = 0; i < bufferLength; i++) {
+
+            var v = dataArray[i] / 128.0;
+            var y = v * HEIGHT / 2;
+
+            if (i === 0) {
+                canvasCtx.moveTo(x, y);
+            } else {
+                canvasCtx.lineTo(x, y);
+            }
+
+            x += sliceWidth;
+        }
+
+        canvasCtx.lineTo(canvas.width, canvas.height / 2);
+        canvasCtx.stroke();
+    };
+
+    draw();
+    return analyser;
+}
 
 /**
  * Attempts at using Flocking for our audio generation (using latest master from 4/2/2017)
  * https://github.com/colinbdclark/Flocking/blob/master/docs/buffers/about-buffers.md#using-the-flockugenwritebuffer-unit-generator
  */
-var createFlockingData = function (context, wavesurfer, jsondata) {
+var createFlockingData = function (environment, jsondata) {
     var vals = new Array(jsondata.data.length);
     for (var ii = 0; ii < jsondata.data.length; ii++) {
         vals[ii] = jsondata.data[ii];
     }
-    // Initialize Flocking and hold onto a reference
-    // to the environment.
-    var environment = flock.init();
+    var svals = Float32Array.from(vals, function (val) { return parseFloat(val.v); });
 
-    // Record a 10 second, 4-channel audio file.
+    // window.console.log(svals);
+    // TODO: this is where we need to actually do stuff!!
     var synth = flock.synth({
-        synthDef: {
-            ugen: "flock.ugen.writeBuffer",
-            options: {
-                duration: 30,
-                numOutputs: 4
-            },
-            buffer: "recording",
-            sources: [
-                {
-                    ugen: "flock.ugen.sin"
-                },
-                {
-                    ugen: "flock.ugen.square"
-                },
-                {
-                    ugen: "flock.ugen.tri"
-                },
-                {
-                    ugen: "flock.ugen.saw"
-                }
-            ]
+        synthDef:
+        {
+            ugen: "flock.ugen.osc",
+            table: svals
         }
-    });
-
-    environment.start();
-    environment.asyncScheduler.once(10, function () {
-        environment.stop();
-        wavesurfer.loadDecodedBuffer(flock.bufferDesc.toAudioBuffer(context, environment.buffers["recording"]));
-        // environment.saveBuffer({
-        //     type: "wav",
-        //     format: "float32",
-        //     buffer: "recording",
-        //     path: "my-recording.wav"
-        // });
     });
 }
 
@@ -98,17 +127,17 @@ var createAudioBuffer = function (context, jsondata) {
     return audioBuffer;
 }
 
-var loadData = function (wavesurfer) {
+var loadData = function (environment) {
     width = 600;
     height = 300;
     padding = 30;
 
     callbk = function (responsejson) {
-        //wavesurfer.load('http://ia902606.us.archive.org/35/items/shortpoetry_047_librivox/song_cjrg_teasdale_64kb.mp3');
-        var context = new AudioContext();
-        //wavesurfer.loadDecodedBuffer(createAudioBuffer(context, responsejson));
-        createFlockingData(context, wavesurfer, responsejson);
+        createAudioVisualizer(environment);
 
+        createFlockingData(environment, responsejson);
+
+        // plot the actual data using d3 and SVG
         var svg = d3.select("#waveplot").append("svg")
             .attr("width", width).attr("height", height);
 

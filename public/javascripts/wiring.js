@@ -2,21 +2,16 @@
  * all of the logic to wire up our page with the JS code!
  */
 
-var wavesurfer = WaveSurfer.create({
-    container: '#waveblock', 
-    scrollParent: true});
+// Initialize Flocking and hold onto a reference
+// to the environment.
+var environment = flock.init();
 
-
-var play = function() {
-    wavesurfer.play();
+var play = function () {
+    environment.start();
 };
 
-var pause = function() {
-    wavesurfer.pause();
+var stop = function () {
+    environment.stop();
 };
 
-var stop = function() {
-    wavesurfer.stop();
-};
-
-loadData(wavesurfer);
+loadData(environment);
