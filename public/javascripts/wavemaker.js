@@ -98,8 +98,18 @@ var createFlockingData = function (environment, jsondata) {
     var synth = flock.synth({
         synthDef:
         {
-            ugen: "flock.ugen.osc",
-            table: svals
+            // http://flockingjs.org/demos/interactive/html/playground.html#freq_mod
+            ugen: "flock.ugen.sin",
+            freq: {
+                ugen: "flock.ugen.value",
+                rate: "audio",
+                value: 440,
+                mul: {
+                    ugen: "flock.ugen.sin",
+                    table: svals,
+                    freq: 10/(svals.length)
+                }
+            }
         }
     });
 }
