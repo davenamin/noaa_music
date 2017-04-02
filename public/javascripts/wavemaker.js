@@ -22,6 +22,59 @@ var coopsLoader = function (callback) {
     return $.getJSON("/coops", parameters, callback);
 }
 
+
+/**
+ * Attempts at using Flocking for our audio generation (using latest master from 4/2/2017)
+ * https://github.com/colinbdclark/Flocking/blob/master/docs/buffers/about-buffers.md#using-the-flockugenwritebuffer-unit-generator
+ */
+var createFlockingData = function (context, wavesurfer, jsondata) {
+    var vals = new Array(jsondata.data.length);
+    for (var ii = 0; ii < jsondata.data.length; ii++) {
+        vals[ii] = jsondata.data[ii];
+    }
+    // Initialize Flocking and hold onto a reference
+    // to the environment.
+    var environment = flock.init();
+
+    // Record a 10 second, 4-channel audio file.
+    var synth = flock.synth({
+        synthDef: {
+            ugen: "flock.ugen.writeBuffer",
+            options: {
+                duration: 30,
+                numOutputs: 4
+            },
+            buffer: "recording",
+            sources: [
+                {
+                    ugen: "flock.ugen.sin"
+                },
+                {
+                    ugen: "flock.ugen.square"
+                },
+                {
+                    ugen: "flock.ugen.tri"
+                },
+                {
+                    ugen: "flock.ugen.saw"
+                }
+            ]
+        }
+    });
+
+    environment.start();
+    environment.asyncScheduler.once(10, function () {
+        environment.stop();
+        wavesurfer.loadDecodedBuffer(flock.bufferDesc.toAudioBuffer(context, environment.buffers["recording"]));
+        // environment.saveBuffer({
+        //     type: "wav",
+        //     format: "float32",
+        //     buffer: "recording",
+        //     path: "my-recording.wav"
+        // });
+    });
+}
+
 /**
  * create a Uint8Array from a data payload
  */
@@ -52,8 +105,9 @@ var loadData = function (wavesurfer) {
 
     callbk = function (responsejson) {
         //wavesurfer.load('http://ia902606.us.archive.org/35/items/shortpoetry_047_librivox/song_cjrg_teasdale_64kb.mp3');
-        var context = new AudioContext(); 
-        wavesurfer.loadDecodedBuffer(createAudioBuffer(context, responsejson));
+        var context = new AudioContext();
+        //wavesurfer.loadDecodedBuffer(createAudioBuffer(context, responsejson));
+        createFlockingData(context, wavesurfer, responsejson);
 
         var svg = d3.select("#waveplot").append("svg")
             .attr("width", width).attr("height", height);
