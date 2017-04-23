@@ -11,8 +11,13 @@ block content
   p click the buttons, turn on your speakers. try not to cringe.
     br
     canvas(id='waveblock' width='600' height='300')
+  br
+  textarea(id='editor' rows='20' cols='80') Hello. You shouldn't see this!!!
+  br 
+  button(type='button' onclick='load()') Load From Editor
   button(type='button' onclick='play()') Play
   button(type='button' onclick='stop()') Stop
+  br
   h3 Wait, what was I listening to??
   p Just some tidal data...
   div(id='waveplot')

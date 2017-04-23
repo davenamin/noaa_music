@@ -91,28 +91,14 @@ var createFlockingData = function (environment, jsondata) {
     for (var ii = 0; ii < jsondata.data.length; ii++) {
         vals[ii] = jsondata.data[ii];
     }
-    var svals = Float32Array.from(vals, function (val) { return parseFloat(val.v); });
-
-    // window.console.log(svals);
-    // TODO: this is where we need to actually do stuff!!
-    var synth = flock.synth({
-        synthDef:
-        {
-            // http://flockingjs.org/demos/interactive/html/playground.html#freq_mod
-            ugen: "flock.ugen.sin",
-            freq: {
-                ugen: "flock.ugen.value",
-                rate: "audio",
-                value: 440,
-                mul: {
-                    ugen: "flock.ugen.sin",
-                    table: svals,
-                    freq: 10/(svals.length)
-                }
-            }
-        }
+    // probably can't handle NaNs very well, so let's call those -1s
+    window.mllw_vals = Float32Array.from(vals, function (val) {
+        var retval = parseFloat(val.v); if (isNaN(retval)) { return -1; } else { return retval; }
     });
-}
+
+    window.console.log(vals);
+    window.console.log(window.mllw_vals);
+    }
 
 /**
  * create a Uint8Array from a data payload
