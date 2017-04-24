@@ -10,7 +10,6 @@ var environment = flock.init();
 var codeEditor = CodeMirror.fromTextArea($('#editor')[0], {
     mode: {
         name: "javascript",
-        json: true
     },
     autoCloseBrackets: true,
     matchBrackets: true,
@@ -20,8 +19,13 @@ var codeEditor = CodeMirror.fromTextArea($('#editor')[0], {
     lineNumbers: true,
 });
 
-codeEditor.setValue('\
-// "window.mllw_vals" contains an array of NOAA mean lower low water data! \n \
+codeEditor.setValue(' \
+// "window.wl_vals" contains an array of NOAA mean lower low water data \n \
+// "window.wt_vals" contains an array of water temperatures \n \
+// "window.at_vals" contains an array of air temperatures \n \
+// "window.wind_vals" contains an array of wind speeds \n \
+// "window.pressure_vals" contains an array of barometric pressures \n \
+// "window.conductivity_vals" contains an array of water conductivity values \n \
 var synth = flock.synth({ \n \
     synthDef: \n \
     { \n \
@@ -33,7 +37,7 @@ var synth = flock.synth({ \n \
         value: 440, \n \
         mul: { \n \
             ugen: "flock.ugen.sin", \n \
-            table: window.mllw_vals, \n \
+            table: window.wl_vals, \n \
             freq: 1 \n \
             } \n \
         } \n \

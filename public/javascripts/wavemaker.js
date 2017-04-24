@@ -2,25 +2,68 @@
  * encapsulate the logic to grab data from NOAA via CO-OPS
  * (https://tidesandcurrents.noaa.gov/api/)
  * and end up with a buffer of data to treat as audio!
+ * 
+ * Actually - now we're caching the data on the server.
  */
 
-var coopsLoader = function (callback) {
-    // url for CO-OPS data service..
-    // coops_url = 'https://tidesandcurrents.noaa.gov/api/datagetter';
-
-    // things we may or may not change
-    parameters = {
-        format: "json",
-        time_zone: "lst_ldt", //local (daylight savings) time
-        application: "newport-wav", // whatever we want to identify as
-        station: "8452660", // the ID of the newport NOAA station
-        datum: "MLLW", // relative to Mean Lower Low Water datum
-        units: "english", // because AMERICA
-        range: "72", // hours of data
-        product: "water_level" // the type of data
-    }
-    return $.getJSON("/coops", parameters, callback);
+var wlLoader = function (callback) {
+    return $.getJSON("/wl", {
+        version: navigator.appVersion,
+        language: navigator.language,
+        platform: navigator.platform,
+        useragent: navigator.userAgent
+    }, callback);
 }
+
+var wtLoader = function (callback) {
+    return $.getJSON("/wt", {
+        version: navigator.appVersion,
+        language: navigator.language,
+        platform: navigator.platform,
+        useragent: navigator.userAgent
+    }, callback);
+}
+
+
+var atLoader = function (callback) {
+    return $.getJSON("/at", {
+        version: navigator.appVersion,
+        language: navigator.language,
+        platform: navigator.platform,
+        useragent: navigator.userAgent
+    }, callback);
+}
+
+
+var windLoader = function (callback) {
+    return $.getJSON("/wind", {
+        version: navigator.appVersion,
+        language: navigator.language,
+        platform: navigator.platform,
+        useragent: navigator.userAgent
+    }, callback);
+}
+
+
+var pressureLoader = function (callback) {
+    return $.getJSON("/pressure", {
+        version: navigator.appVersion,
+        language: navigator.language,
+        platform: navigator.platform,
+        useragent: navigator.userAgent
+    }, callback);
+}
+
+
+var conductivityLoader = function (callback) {
+    return $.getJSON("/conductivity", {
+        version: navigator.appVersion,
+        language: navigator.language,
+        platform: navigator.platform,
+        useragent: navigator.userAgent
+    }, callback);
+}
+
 
 /**
  * no longer using wavesurfer.js, so make our own HTML5 visualizer..
@@ -86,84 +129,115 @@ var createAudioVisualizer = function (environment) {
  * Attempts at using Flocking for our audio generation (using latest master from 4/2/2017)
  * https://github.com/colinbdclark/Flocking/blob/master/docs/buffers/about-buffers.md#using-the-flockugenwritebuffer-unit-generator
  */
-var createFlockingData = function (environment, jsondata) {
-    var vals = new Array(jsondata.data.length);
-    for (var ii = 0; ii < jsondata.data.length; ii++) {
-        vals[ii] = jsondata.data[ii];
+var createFlockingData = function () {
+    var vals = new Array(window.wl_data.data.length);
+    for (var ii = 0; ii < window.wl_data.data.length; ii++) {
+        vals[ii] = window.wl_data.data[ii];
     }
     // probably can't handle NaNs very well, so let's call those -1s
-    window.mllw_vals = Float32Array.from(vals, function (val) {
+    window.wl_vals = Float32Array.from(vals, function (val) {
         var retval = parseFloat(val.v); if (isNaN(retval)) { return -1; } else { return retval; }
     });
 
-    window.console.log(vals);
-    window.console.log(window.mllw_vals);
+    var vals = new Array(window.wt_data.data.length);
+    for (var ii = 0; ii < window.wt_data.data.length; ii++) {
+        vals[ii] = window.wt_data.data[ii];
     }
+    // probably can't handle NaNs very well, so let's call those -1s
+    window.wt_vals = Float32Array.from(vals, function (val) {
+        var retval = parseFloat(val.v); if (isNaN(retval)) { return -1; } else { return retval; }
+    });
 
-/**
- * create a Uint8Array from a data payload
- */
-var createAudioBuffer = function (context, jsondata) {
-    var vals = new Array(jsondata.data.length);
-    for (var ii = 0; ii < jsondata.data.length; ii++) {
-        vals[ii] = jsondata.data[ii];
+    var vals = new Array(window.at_data.data.length);
+    for (var ii = 0; ii < window.at_data.data.length; ii++) {
+        vals[ii] = window.at_data.data[ii];
     }
-    var betweenvals = 6;
-    var sampleRate = 44100;
-    var audioBuffer = context.createBuffer(1, vals.length * betweenvals, sampleRate); // new Uint8Array(vals.length * betweenvals);
-    var retval = audioBuffer.getChannelData(0);
-    // map the values to a byte buffer
-    var mapper = d3.scaleLinear().domain(d3.extent(vals)).range([0, 255]);
-    for (var ii = 0; ii < vals.length; ii++) {
-        var interp = d3.interpolateNumber(vals[ii - 1], vals[ii]);
-        for (var jj = 0; jj < betweenvals; jj++) {
-            retval[ii + jj] = interp(jj / 6);
-        }
+    // probably can't handle NaNs very well, so let's call those -1s
+    window.at_vals = Float32Array.from(vals, function (val) {
+        var retval = parseFloat(val.v); if (isNaN(retval)) { return -1; } else { return retval; }
+    });
+
+    var vals = new Array(window.wind_data.data.length);
+    for (var ii = 0; ii < window.wind_data.data.length; ii++) {
+        vals[ii] = window.wind_data.data[ii];
     }
-    return audioBuffer;
+    // probably can't handle NaNs very well, so let's call those -1s
+    window.wind_vals = Float32Array.from(vals, function (val) {
+        var retval = parseFloat(val.g); if (isNaN(retval)) { return -1; } else { return retval; }
+    });
+
+    var vals = new Array(window.pressure_data.data.length);
+    for (var ii = 0; ii < window.pressure_data.data.length; ii++) {
+        vals[ii] = window.pressure_data.data[ii];
+    }
+    // probably can't handle NaNs very well, so let's call those -1s
+    window.pressure_vals = Float32Array.from(vals, function (val) {
+        var retval = parseFloat(val.v); if (isNaN(retval)) { return -1; } else { return retval; }
+    });
+
+    var vals = new Array(window.conductivity_data.data.length);
+    for (var ii = 0; ii < window.conductivity_data.data.length; ii++) {
+        vals[ii] = window.conductivity_data.data[ii];
+    }
+    // probably can't handle NaNs very well, so let's call those -1s
+    window.conductivity_vals = Float32Array.from(vals, function (val) {
+        var retval = parseFloat(val.v); if (isNaN(retval)) { return -1; } else { return retval; }
+    });
 }
 
-var loadData = function (environment) {
+var createDataGraph = function () {
     width = 600;
     height = 300;
     padding = 30;
 
-    callbk = function (responsejson) {
+    // plot the actual data using d3 and SVG
+    var svg = d3.select("#waveplot").append("svg")
+        .attr("width", width).attr("height", height);
+
+    var tfunc = function (d) { return Date.parse(d.t) };
+    var vfunc = function (d) { return d.v };
+
+    var xaxis = d3.scaleTime().domain(d3.extent(window.wl_data.data, tfunc)).nice()
+        .range([0, width]);
+    var xmap = function (d) { return xaxis(tfunc(d)); };
+    svg.append("g").attr("class", "axis")
+        .attr("transform", "translate(0," + padding + ")")
+        .call(d3.axisTop(xaxis))
+        .append("text").attr("class", "label");
+
+    var yaxis = d3.scaleLinear()
+        .domain([
+            d3.min(window.wl_data.data, vfunc) - 1,
+            d3.max(window.wl_data.data, vfunc) + 1
+        ]).nice()
+        .range([height, 0]);
+    var ymap = function (d) { return yaxis(vfunc(d)); };
+    svg.append("g").attr("class", "axis")
+        .attr("transform", "translate(" + padding + ",0)")
+        .call(d3.axisLeft(yaxis))
+        .append("text").attr("class", "label");
+
+    svg.selectAll("circle").data(window.wl_data.data)
+        .enter().append("circle").attr("cx", xmap)
+        .attr("cy", ymap)
+        .attr("r", 1);
+
+}
+
+
+var loadData = function (environment) {
+
+    /** grab all of the data */
+    $.when(wlLoader(function (calldata) { window.wl_data = calldata; }),
+        wtLoader(function (calldata) { window.wt_data = calldata; }),
+        atLoader(function (calldata) { window.at_data = calldata; }),
+        windLoader(function (calldata) { window.wind_data = calldata; }),
+        pressureLoader(function (calldata) { window.pressure_data = calldata; }),
+        conductivityLoader(function (calldata) { window.conductivity_data = calldata; }),
+    ).then(function () {
+        createDataGraph();
+        createFlockingData();
         createAudioVisualizer(environment);
+    });
 
-        createFlockingData(environment, responsejson);
-
-        // plot the actual data using d3 and SVG
-        var svg = d3.select("#waveplot").append("svg")
-            .attr("width", width).attr("height", height);
-
-        var tfunc = function (d) { return Date.parse(d.t) };
-        var vfunc = function (d) { return d.v };
-
-        var xaxis = d3.scaleTime().domain(d3.extent(responsejson.data, tfunc)).nice()
-            .range([0, width]);
-        var xmap = function (d) { return xaxis(tfunc(d)); };
-        svg.append("g").attr("class", "axis")
-            .attr("transform", "translate(0," + padding + ")")
-            .call(d3.axisTop(xaxis))
-            .append("text").attr("class", "label");
-
-        var yaxis = d3.scaleLinear()
-            .domain([
-                d3.min(responsejson.data, vfunc) - 1,
-                d3.max(responsejson.data, vfunc) + 1
-            ]).nice()
-            .range([height, 0]);
-        var ymap = function (d) { return yaxis(vfunc(d)); };
-        svg.append("g").attr("class", "axis")
-            .attr("transform", "translate(" + padding + ",0)")
-            .call(d3.axisLeft(yaxis))
-            .append("text").attr("class", "label");
-
-        svg.selectAll("circle").data(responsejson.data)
-            .enter().append("circle").attr("cx", xmap)
-            .attr("cy", ymap)
-            .attr("r", 1);
-    }
-    coopsLoader(callbk);
 };
