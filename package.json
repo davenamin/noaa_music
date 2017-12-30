@@ -3,8 +3,7 @@
     "version": "0.0.1",
     "private": true,
     "scripts": {
-	"prestart": "webpack",
-	"start": "node ./bin/www"
+	"start": "webpack && node ./bin/www"
     },
     "dependencies": {
 	"body-parser": "1.17.2",
