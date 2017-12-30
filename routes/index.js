@@ -50,8 +50,8 @@ var refresh_data = function () {
     station: "8452660", // the ID of the newport NOAA station
     datum: "MLLW", // relative to Mean Lower Low Water datum
     units: "english", // because AMERICA
-    range: "72", // hours of data
-  }
+    range: "72" // hours of data
+  };
 
   wl_parameters = JSON.parse(JSON.stringify(coops_parameters));
   wl_parameters.product = "water_level";
@@ -100,40 +100,36 @@ var refresh_data = function () {
       if (error) console.log("error: " + error);
       conductivity_data = body;
     });
-}
+};
 
 router.get('/wl', function (req, res, next) {
   res.json(wl_data);
-})
+});
 
 router.get('/wt', function (req, res, next) {
   res.json(wt_data);
-})
+});
 
 
 router.get('/at', function (req, res, next) {
   res.json(at_data);
-})
+});
 
 
 router.get('/wind', function (req, res, next) {
   res.json(wind_data);
-})
+});
 
 
 router.get('/pressure', function (req, res, next) {
   res.json(pressure_data);
-})
+});
 
 router.get('/conductivity', function (req, res, next) {
   res.json(conductivity_data);
-})
+});
 
 // get fresh data
 refresh_data();
-
-/** refresh data every 15 min */
-var data_refresher = setTimeout(refresh_data, 15 * 60 * 1000);
-
 
 module.exports = router;

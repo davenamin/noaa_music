@@ -13,7 +13,7 @@ var wlLoader = function (callback) {
         platform: navigator.platform,
         useragent: navigator.userAgent
     }, callback);
-}
+};
 
 var wtLoader = function (callback) {
     return $.getJSON("/wt", {
@@ -22,7 +22,7 @@ var wtLoader = function (callback) {
         platform: navigator.platform,
         useragent: navigator.userAgent
     }, callback);
-}
+};
 
 
 var atLoader = function (callback) {
@@ -32,7 +32,7 @@ var atLoader = function (callback) {
         platform: navigator.platform,
         useragent: navigator.userAgent
     }, callback);
-}
+};
 
 
 var windLoader = function (callback) {
@@ -42,7 +42,7 @@ var windLoader = function (callback) {
         platform: navigator.platform,
         useragent: navigator.userAgent
     }, callback);
-}
+};
 
 
 var pressureLoader = function (callback) {
@@ -52,7 +52,7 @@ var pressureLoader = function (callback) {
         platform: navigator.platform,
         useragent: navigator.userAgent
     }, callback);
-}
+};
 
 
 var conductivityLoader = function (callback) {
@@ -62,7 +62,7 @@ var conductivityLoader = function (callback) {
         platform: navigator.platform,
         useragent: navigator.userAgent
     }, callback);
-}
+};
 
 
 /**
@@ -88,7 +88,7 @@ var createAudioVisualizer = function (environment) {
     var HEIGHT = canvas.height;
     function draw() {
 
-        drawVisual = requestAnimationFrame(draw);
+        var drawVisual = requestAnimationFrame(draw);
 
         analyser.getByteTimeDomainData(dataArray);
 
@@ -126,7 +126,8 @@ var createAudioVisualizer = function (environment) {
 }
 
 /**
- * Attempts at using Flocking for our audio generation (using latest master from 4/2/2017)
+ * Attempts at using Flocking for our audio generation (using latest
+ * master from 12/30/2017)
  * https://github.com/colinbdclark/Flocking/blob/master/docs/buffers/about-buffers.md#using-the-flockugenwritebuffer-unit-generator
  */
 var createFlockingData = function () {
@@ -186,9 +187,9 @@ var createFlockingData = function () {
 }
 
 var createDataGraph = function () {
-    width = 600;
-    height = 300;
-    padding = 30;
+    var width = 600;
+    var height = 300;
+    var padding = 30;
 
     // plot the actual data using d3 and SVG
     var svg = d3.select("#waveplot").append("svg")
@@ -222,22 +223,22 @@ var createDataGraph = function () {
         .attr("cy", ymap)
         .attr("r", 1);
 
-}
-
+};
 
 var loadData = function (environment) {
 
     /** grab all of the data */
-    $.when(wlLoader(function (calldata) { window.wl_data = calldata; }),
-        wtLoader(function (calldata) { window.wt_data = calldata; }),
-        atLoader(function (calldata) { window.at_data = calldata; }),
-        windLoader(function (calldata) { window.wind_data = calldata; }),
-        pressureLoader(function (calldata) { window.pressure_data = calldata; }),
-        conductivityLoader(function (calldata) { window.conductivity_data = calldata; }),
-    ).then(function () {
-        createDataGraph();
-        createFlockingData();
-        createAudioVisualizer(environment);
+    return $.when( 
+	wlLoader(function (calldata) {window.wl_data = calldata;}),
+	wtLoader(function (calldata) {window.wt_data = calldata;}),
+	atLoader(function (calldata) {window.at_data = calldata;}),
+	windLoader(function (calldata) {window.wind_data = calldata;}),
+	pressureLoader(function (calldata) {window.pressure_data = calldata;}),
+	conductivityLoader(function (calldata) {window.conductivity_data = calldata;})
+    ).done( function () {
+	createDataGraph();
+	createFlockingData();
+	createAudioVisualizer(environment);
     });
 
 };
